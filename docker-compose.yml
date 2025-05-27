@@ -1,0 +1,27 @@
+services:
+  api:
+    build:
+      context: .
+    container_name: habit-tracker-api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    env_file:
+      - .env
+
+  db:
+    image: postgres:15
+    container_name: habit-tracker-db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: habits
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
