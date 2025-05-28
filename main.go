@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/simonscabello/habit-tracker-api/config"
 	"github.com/simonscabello/habit-tracker-api/database"
@@ -15,7 +17,13 @@ func main() {
 	config.Load()
 	database.Connect()
 
-	err := database.DB.AutoMigrate(&models.User{}, &models.Habit{})
+	loc, error := time.LoadLocation(os.Getenv("TZ"))
+	if error != nil {
+		panic("Fuso horário inválido")
+	}
+	time.Local = loc
+
+	err := database.DB.AutoMigrate(&models.User{}, &models.Habit{}, &models.HabitLog{})
 
 	if err != nil {
 		log.Fatalf("Erro ao migrar tabela: %v", err)

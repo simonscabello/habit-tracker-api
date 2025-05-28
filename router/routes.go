@@ -25,6 +25,7 @@ func SetupRoutes() http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.RequireAuth)
 		r.Get("/me", handlers.GetMe)
+		r.Get("/progress", handlers.GetWeeklyProgress)
 	})
 
 	// Rotas protegidas: /habits
@@ -36,6 +37,8 @@ func SetupRoutes() http.Handler {
 		r.Get("/{id}", handlers.GetHabitByID)
 		r.Put("/{id}", handlers.UpdateHabit)
 		r.Delete("/{id}", handlers.DeleteHabit)
+		r.Post("/{id}/log", handlers.LogHabit)
+
 	})
 
 	return r
