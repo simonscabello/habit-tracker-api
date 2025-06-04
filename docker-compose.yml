@@ -1,27 +1,39 @@
+version: '3.8'
+
 services:
-  api:
+  app:
     build:
       context: .
-    container_name: habit-tracker-api
+      dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8000:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=habit_tracker
+      - DB_PORT=5432
     depends_on:
-      - db
-    env_file:
-      - .env
+      - postgres
+    networks:
+      - habit-tracker-network
 
-  db:
-    image: postgres:15
-    container_name: habit-tracker-db
-    restart: always
+  postgres:
+    image: postgres:16-alpine
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: habits
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=habit_tracker
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - habit-tracker-network
 
 volumes:
   postgres_data:
+
+networks:
+  habit-tracker-network:
+    driver: bridge 
