@@ -59,6 +59,7 @@ func GetHabits(w http.ResponseWriter, r *http.Request) {
 		CreatedAt   time.Time `json:"created_at"`
 		UpdatedAt   time.Time `json:"updated_at"`
 		DoneToday   bool      `json:"done_today"`
+		Streak      int       `json:"streak"`
 	}
 
 	var response []HabitWithStatus
@@ -69,6 +70,45 @@ func GetHabits(w http.ResponseWriter, r *http.Request) {
 			Where("habit_id = ? AND user_id = ? AND DATE(completed_at) = ?", habit.ID, userID, today).
 			First(&log).Error
 
+		// Calcula o streak
+		var streak int
+		var logs []models.HabitLog
+		database.DB.
+			Where("habit_id = ? AND user_id = ? AND completed_at <= ?", habit.ID, userID, today).
+			Order("completed_at DESC").
+			Find(&logs)
+
+		if len(logs) > 0 {
+			currentDate := today
+			streak = 0
+
+			for i := 0; i < len(logs); i++ {
+				logDate := time.Date(
+					logs[i].CompletedAt.Year(),
+					logs[i].CompletedAt.Month(),
+					logs[i].CompletedAt.Day(),
+					0, 0, 0, 0,
+					logs[i].CompletedAt.Location(),
+				)
+
+				if i == 0 && logDate.Before(currentDate) {
+					// Se o último log for de um dia anterior, o streak é 0
+					break
+				}
+
+				if i > 0 {
+					expectedDate := currentDate.AddDate(0, 0, -1)
+					if logDate.Before(expectedDate) {
+						// Se houver um gap maior que 1 dia, o streak é interrompido
+						break
+					}
+				}
+
+				streak++
+				currentDate = logDate
+			}
+		}
+
 		response = append(response, HabitWithStatus{
 			ID:          habit.ID,
 			Name:        habit.Name,
@@ -76,6 +116,7 @@ func GetHabits(w http.ResponseWriter, r *http.Request) {
 			CreatedAt:   habit.CreatedAt,
 			UpdatedAt:   habit.UpdatedAt,
 			DoneToday:   err == nil,
+			Streak:      streak,
 		})
 	}
 

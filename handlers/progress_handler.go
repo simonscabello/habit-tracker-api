@@ -40,3 +40,32 @@ func GetWeeklyProgress(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(progress)
 }
+
+func GetDailyProgress(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(middleware.UserIDKey).(uint)
+
+	location := time.Local
+	now := time.Now().In(location)
+
+	today := time.Date(
+		now.Year(), now.Month(), now.Day(),
+		0, 0, 0, 0,
+		location,
+	)
+
+	tomorrow := today.AddDate(0, 0, 1)
+
+	var count int64
+	err := database.DB.
+		Model(&models.HabitLog{}).
+		Where("user_id = ? AND completed_at >= ? AND completed_at < ?", userID, today, tomorrow).
+		Count(&count).Error
+
+	if err != nil {
+		http.Error(w, "Erro ao buscar progresso diário", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(count)
+}

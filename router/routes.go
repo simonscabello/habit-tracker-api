@@ -13,7 +13,6 @@ func SetupRoutes() http.Handler {
 
 	r.Use(middleware.CorsMiddleware)
 
-	// Rotas públicas
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Habit Tracker API is running!"))
 	})
@@ -21,14 +20,13 @@ func SetupRoutes() http.Handler {
 	r.Post("/register", handlers.RegisterUser)
 	r.Post("/login", handlers.LoginUser)
 
-	// Rota protegida: /me
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.RequireAuth)
 		r.Get("/me", handlers.GetMe)
-		r.Get("/progress", handlers.GetWeeklyProgress)
+		r.Get("/progress/weekly", handlers.GetWeeklyProgress)
+		r.Get("/progress/daily", handlers.GetDailyProgress)
 	})
 
-	// Rotas protegidas: /habits
 	r.Route("/habits", func(r chi.Router) {
 		r.Use(middleware.RequireAuth)
 
